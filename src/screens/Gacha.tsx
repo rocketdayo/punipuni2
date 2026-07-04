@@ -10,6 +10,11 @@ const GACHA_COST_10 = 500;
 const GACHA_COST_100 = 5000;
 const GACHA_COST_500 = 25000;
 
+const RANK_ORDER: Record<Rank, number> = { S: 0, A: 1, B: 2, C: 3, D: 4, E: 5 };
+const RANK_COLORS: Record<Rank, string> = {
+  S: '#ff2222', A: '#ffaa00', B: '#ff88bb', C: '#cc6666', D: '#55bb55', E: '#88cc88'
+};
+
 const rankWeights: Record<Rank, number> = {
   'S': 2,
   'A': 8,
@@ -58,9 +63,8 @@ const Gacha = () => {
         unlockCharacter(pulledChar.id);
       }
       
-      // If 100 or 500, we don't animate all of them heavily, but just show them in a grid.
-      // But 500 characters is a lot of DOM elements! We might just show top rarities if it's too much,
-      // but for now let's just render them small.
+      // Sort results by rank (S first)
+      pulledChars.sort((a, b) => RANK_ORDER[a.rank] - RANK_ORDER[b.rank]);
       setResults(pulledChars);
       setIsPulling(false);
     }, 1500);
@@ -120,32 +124,57 @@ const Gacha = () => {
               marginBottom: '30px',
               padding: '0 10px'
             }}>
-              {results.map((result, idx) => (
-                <div key={idx} style={{ 
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  background: 'rgba(255,255,255,0.8)', 
-                  padding: results.length > 50 ? '2px' : '6px', 
-                  borderRadius: '12px',
-                  border: `3px solid var(--rank-${result.rank.toLowerCase()})`,
-                  width: results.length > 50 ? '40px' : results.length > 10 ? '60px' : results.length > 1 ? '80px' : '140px'
-                }}>
-                  <div className="char-icon" style={{ 
-                    backgroundColor: result.color, 
-                    width: '100%', 
-                    aspectRatio: '1/1',
-                    fontSize: results.length > 50 ? '1rem' : results.length > 10 ? '1.5rem' : results.length > 1 ? '2rem' : '4rem',
-                    marginBottom: '4px' 
+              {results.map((result, idx) => {
+                const iconSize = results.length > 50 ? 40 : results.length > 10 ? 60 : results.length > 1 ? 80 : 140;
+                const fontSize = results.length > 50 ? '1rem' : results.length > 10 ? '1.5rem' : results.length > 1 ? '2rem' : '4rem';
+                return (
+                  <div key={idx} style={{ 
+                    position: 'relative',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    background: 'rgba(255,255,255,0.9)', 
+                    padding: results.length > 50 ? '3px' : '8px', 
+                    borderRadius: '14px',
+                    border: `3px solid ${RANK_COLORS[result.rank]}`,
+                    width: `${iconSize + (results.length > 50 ? 6 : 16)}px`,
+                    boxShadow: result.rank === 'S' ? '0 0 10px rgba(255,50,50,0.5)' : 'none',
                   }}>
-                    {result.imageUrl ? <img src={result.imageUrl} alt={result.name} style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:'50%'}} /> : result.emoji}
-                  </div>
-                  {results.length <= 10 && (
-                    <span className="rank-badge" style={{ backgroundColor: `var(--rank-${result.rank.toLowerCase()})`, marginBottom: '5px', fontSize: '0.8rem' }}>
+                    {/* Character image */}
+                    <div className="char-icon" style={{ 
+                      backgroundColor: result.color, 
+                      width: `${iconSize}px`,
+                      height: `${iconSize}px`,
+                      fontSize,
+                    }}>
+                      {result.imageUrl 
+                        ? <img src={result.imageUrl} alt={result.name} style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:'50%'}} /> 
+                        : result.emoji}
+                    </div>
+                    {/* Rank badge - top right */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      background: RANK_COLORS[result.rank],
+                      color: 'white',
+                      fontWeight: 900,
+                      fontSize: results.length > 50 ? '0.5rem' : '0.7rem',
+                      padding: results.length > 50 ? '1px 3px' : '2px 5px',
+                      borderRadius: '8px',
+                      border: '2px solid white',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                      lineHeight: 1.2,
+                    }}>
                       {result.rank}
-                    </span>
-                  )}
-                  {results.length === 1 && <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#333' }}>{result.name}</h3>}
-                </div>
-              ))}
+                    </div>
+                    {/* Name (single pull only) */}
+                    {results.length === 1 && (
+                      <p style={{ margin: '6px 0 0', fontSize: '1rem', fontWeight: 900, color: '#333' }}>
+                        {result.name}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
