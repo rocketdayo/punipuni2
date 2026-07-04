@@ -39,8 +39,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ensure clearedStages exists (for old save data)
       if (!playerData.clearedStages) playerData.clearedStages = [];
       // Clean up invalid characters from old saves
-      const validTeam = (playerData.team || []).filter(id => CHARACTERS.some(c => c.id === id));
-      if (validTeam.length !== playerData.team.length) {
+      let validTeam = (playerData.team || []).filter(id => CHARACTERS.some(c => c.id === id));
+      if (validTeam.length === 0) {
+        // Fallback for broken saves
+        validTeam = ['char_e_51'];
+        if (!playerData.characters['char_e_51']) {
+          playerData.characters['char_e_51'] = { level: 1 };
+          savePlayerData(uid, { characters: playerData.characters });
+        }
+      }
+      if (validTeam.length !== (playerData.team || []).length) {
         playerData.team = validTeam;
         savePlayerData(uid, { team: validTeam });
       }

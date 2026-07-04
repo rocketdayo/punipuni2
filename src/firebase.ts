@@ -33,9 +33,9 @@ const DEFAULT_DATA: PlayerData = {
   money: 0,
   yPoints: 50,
   characters: {
-    'char_e_1': { level: 1 }
+    'char_e_51': { level: 1 }
   },
-  team: ['char_e_1'],
+  team: ['char_e_51'],
   maxClearedStageId: '',
   clearedStages: [],
 };
