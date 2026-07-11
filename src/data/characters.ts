@@ -1,4 +1,4 @@
-export type Rank = 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
+export type Rank = 'E' | 'D' | 'C' | 'B' | 'A' | 'S' | 'SS';
 
 export interface Skill {
   name: string;
@@ -30,6 +30,7 @@ const generateCharacters = (): Character[] => {
     'B': '/puni_b.png',
     'A': '/puni_a.png',
     'S': import.meta.env.BASE_URL + 'puni_s.png',
+    'SS': import.meta.env.BASE_URL + 'puni_s.png', // Fallback to S rank icon
   };
 
   const createSet = (rank: Rank, baseHp: number, baseAtk: number, color: string, animals: {name: string, emoji: string}[]) => {
@@ -45,11 +46,12 @@ const generateCharacters = (): Character[] => {
         baseHp: baseHp + i * 5,
         baseAtk: baseAtk + i * 2,
       };
-      if (rank === 'S') {
+      if (rank === 'S' || rank === 'SS') {
+        const isSS = rank === 'SS';
         char.skill = {
-          name: i % 2 === 0 ? '超爆裂波' : '癒やしの極み',
+          name: isSS ? (i % 2 === 0 ? '究極破壊砲' : '神の祝福') : (i % 2 === 0 ? '超爆裂波' : '癒やしの極み'),
           type: i % 2 === 0 ? 'damage' : 'heal',
-          power: i % 2 === 0 ? 15 : 500, // 15x damage multiplier or 500 flat heal
+          power: isSS ? (i % 2 === 0 ? 30 : 1500) : (i % 2 === 0 ? 15 : 500),
         };
       }
       chars.push(char);
@@ -91,6 +93,12 @@ const generateCharacters = (): Character[] => {
     {name: 'おろち', emoji: '🐍'}, {name: 'ぬらり', emoji: '👽'}, {name: 'あしゅら', emoji: '👿'}, {name: 'てんし', emoji: '👼'}, {name: 'あくま', emoji: '😈'}
   ];
   createSet('S', 700, 100, '#ff2222', sAnimals);
+
+  const ssAnimals = [
+    {name: '覚醒おに', emoji: '👹'}, {name: '神龍', emoji: '🐉'}, {name: '創造神', emoji: '✨'}, {name: '大王えんま', emoji: '👑'}, {name: '白金きゅうび', emoji: '🦊'},
+    {name: '八岐おろち', emoji: '🐍'}, {name: 'ぬらり神', emoji: '👽'}, {name: '覇王あしゅら', emoji: '👿'}, {name: '大天使', emoji: '👼'}, {name: '大魔王', emoji: '😈'}
+  ];
+  createSet('SS', 1200, 250, '#ff22ff', ssAnimals);
 
   return chars;
 };

@@ -5,9 +5,9 @@ import { useGame } from '../store/GameContext';
 import { CHARACTERS } from '../data/characters';
 import type { Rank } from '../data/characters';
 
-const RANKS: Rank[] = ['S', 'A', 'B', 'C', 'D', 'E'];
+const RANKS: Rank[] = ['SS', 'S', 'A', 'B', 'C', 'D', 'E'];
 const RANK_COLORS: Record<Rank, string> = {
-  S: '#ff2222', A: '#ffaa00', B: '#ff88aa', C: '#aa5555', D: '#55aa55', E: '#88cc88'
+  SS: '#ff22ff', S: '#ff2222', A: '#ffaa00', B: '#ff88bb', C: '#cc6666', D: '#55bb55', E: '#88cc88'
 };
 const PER_PAGE = 20;
 

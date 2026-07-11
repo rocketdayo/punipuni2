@@ -6,11 +6,11 @@ import { ArrowLeft, ArrowUpCircle, ChevronLeft, ChevronRight, Check } from 'luci
 import { useNavigate } from 'react-router-dom';
 
 const rankMaxLevels: Record<Rank, number> = {
-  'S': 50, 'A': 40, 'B': 30, 'C': 25, 'D': 20, 'E': 10
+  'SS': 60, 'S': 50, 'A': 40, 'B': 30, 'C': 25, 'D': 20, 'E': 10
 };
 
 const rankCostMultipliers: Record<Rank, number> = {
-  'S': 300, 'A': 200, 'B': 150, 'C': 100, 'D': 80, 'E': 50
+  'SS': 500, 'S': 300, 'A': 200, 'B': 150, 'C': 100, 'D': 80, 'E': 50
 };
 
 const CHARS_PER_PAGE = 12; // 4 columns x 3 rows grid
