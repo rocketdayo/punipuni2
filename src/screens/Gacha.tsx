@@ -88,6 +88,18 @@ const Gacha = () => {
     }
   };
 
+  const scrollToEvent = () => {
+    if (swipeContainerRef.current) {
+      swipeContainerRef.current.scrollTo({ left: swipeContainerRef.current.clientWidth, behavior: 'smooth' });
+    }
+  };
+
+  const scrollToNormal = () => {
+    if (swipeContainerRef.current) {
+      swipeContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  };
+
   const GachaButton = ({ times, cost, color }: { times: number, cost: number, color?: string }) => (
     <button 
       className={`btn ${color || 'btn-primary'}`}
@@ -214,10 +226,15 @@ const Gacha = () => {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             {/* Swipable Banners */}
             <div style={{ position: 'relative', marginTop: '60px', flex: 1 }}>
-              {currentGacha === 'event' && <div style={{position:'absolute', left: 10, top: '40%', zIndex: 5, animation: 'pulse 2s infinite'}}><ChevronLeft size={40} color="white" /></div>}
-              {currentGacha === 'normal' && <div style={{position:'absolute', right: 10, top: '40%', zIndex: 5, animation: 'pulse 2s infinite'}}><ChevronRight size={40} color="white" /></div>}
+              {currentGacha === 'event' && <div onClick={scrollToNormal} style={{position:'absolute', left: 10, top: '40%', zIndex: 5, animation: 'pulse 2s infinite', cursor: 'pointer'}}><ChevronLeft size={40} color="white" /></div>}
+              {currentGacha === 'normal' && <div onClick={scrollToEvent} style={{position:'absolute', right: 10, top: '40%', zIndex: 5, animation: 'pulse 2s infinite', cursor: 'pointer'}}><ChevronRight size={40} color="white" /></div>}
               
-              <div ref={swipeContainerRef} className="gacha-swipe-container" onScroll={handleScroll} style={{ height: '100%' }}>
+              <div 
+                ref={swipeContainerRef}
+                className="gacha-swipe-container"
+                onScroll={handleScroll}
+                style={{ height: '100%', scrollBehavior: 'smooth' }}
+              >
                 {/* Normal Gacha Page */}
                 <div className="gacha-swipe-item">
                   <div style={{ 
