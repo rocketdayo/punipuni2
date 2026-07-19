@@ -10,6 +10,8 @@ import TeamBuilder from './screens/TeamBuilder';
 import StageSelect from './screens/StageSelect';
 import GameScene from './screens/GameScene';
 import Collection from './screens/Collection';
+import EventHome from './screens/EventHome';
+import MissionList from './screens/MissionList';
 
 const App = () => {
   const { loading, money, yPoints } = useGame();
@@ -52,6 +54,8 @@ const App = () => {
               <Route path="/stages" element={<StageSelect />} />
               <Route path="/stage/:stageId" element={<GameScene />} />
               <Route path="/collection" element={<Collection />} />
+              <Route path="/event" element={<EventHome />} />
+              <Route path="/missions" element={<MissionList />} />
             </Routes>
           </>
         } />

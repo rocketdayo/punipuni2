@@ -20,24 +20,41 @@ export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
+export interface CharacterSaveData {
+  level: number;
+  skillLevel?: number;    // わざレベル 1-5
+  limitBreak?: number;    // 限界突破段階 0-5
+  duplicates?: number;    // 同キャラ取得回数（限界突破用）
+}
+
 export interface PlayerData {
   money: number;
   yPoints: number;
-  characters: Record<string, { level: number }>;
+  characters: Record<string, CharacterSaveData>;
   team: string[];
   maxClearedStageId: string;
-  clearedStages: string[]; // list of cleared stage IDs
+  clearedStages: string[];
+  items: {
+    expSmall: number;   // 小けいけんちだま (+1 level)
+    expLarge: number;   // 大けいけんちだま (+5 levels)
+    skillBook: number;  // ひっさつの秘伝書 (+1 わざレベル)
+  };
+  missionProgress: Record<string, number>;  // missionId -> progress count
+  completedMissions: string[];              // claimed mission IDs
 }
 
 const DEFAULT_DATA: PlayerData = {
   money: 0,
   yPoints: 50,
   characters: {
-    'char_e_51': { level: 1 }
+    'char_e_51': { level: 1, skillLevel: 1, limitBreak: 0, duplicates: 0 }
   },
   team: ['char_e_51'],
   maxClearedStageId: '',
   clearedStages: [],
+  items: { expSmall: 3, expLarge: 1, skillBook: 0 },
+  missionProgress: {},
+  completedMissions: [],
 };
 
 export const loginAndGetData = async (onDataLoaded: (data: PlayerData, uid: string) => void) => {

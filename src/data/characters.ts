@@ -12,11 +12,14 @@ export interface Character {
   rank: Rank;
   color: string;
   emoji: string;
-  rankImage: string;  // path to rank-based sprite image
-  imageUrl?: string;  // path to specific character photo
+  rankImage: string;
+  imageUrl?: string;
   baseHp: number;
   baseAtk: number;
   skill?: Skill;
+  trait?: string;           // キャラ特性（フレーバーテキスト）
+  eventBoost?: boolean;     // イベント特効キャラか
+  eventBoostDesc?: string;  // 特効の説明文
 }
 
 const generateCharacters = (): Character[] => {
@@ -53,6 +56,26 @@ const generateCharacters = (): Character[] => {
           type: i % 2 === 0 ? 'damage' : 'heal',
           power: isSS ? (i % 2 === 0 ? 30 : 1500) : (i % 2 === 0 ? 15 : 500),
         };
+        // キャラ特性の設定
+        char.trait = isSS
+          ? (i % 2 === 0 ? '伝説の破壊神。その一撃は山をも砕く。' : '天より降り注ぐ癒やしの力を持つ存在。')
+          : (i % 2 === 0 ? '妖怪界に名を轟かす強者。' : '不思議な力で仲間を守る。');
+        // イベント特効キャラ（SSランクの奇数番目）
+        if (isSS && i % 3 === 0) {
+          char.eventBoost = true;
+          char.eventBoostDesc = '今週のイベント「妖怪大乱！」で攻撃力が3倍になる！';
+        }
+      } else {
+        // A/B/C/D/E ランクの特性
+        const traitsByRank: Record<string, string[]> = {
+          'A': ['妖怪界の猛者。鍛えればSランク以上の力を発揮することも。', '素早い動きで相手を翻弄する。', '頼れる実力者。'],
+          'B': ['努力家。毎日の鍛練を欠かさない。', '仲間想いの優しい妖怪。', '普通に見えて実は凄腕。'],
+          'C': ['まだまだ成長途中の若手妖怪。', '元気いっぱいでやる気は満点！', 'いつかSランクになるのが夢。'],
+          'D': ['ひょうきん者で場を和ませる。', '食いしん坊だが憎めない。', '意外な才能の持ち主かもしれない。'],
+          'E': ['まだまだ駆け出しの妖怪。', 'のんびり屋だが根は優しい。', '夢はいつか大妖怪になること。'],
+        };
+        const traits = traitsByRank[rank];
+        if (traits) char.trait = traits[i % traits.length];
       }
       chars.push(char);
     });

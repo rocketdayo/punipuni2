@@ -4,6 +4,7 @@ import Matter from 'matter-js';
 import { useGame } from '../store/GameContext';
 import { STAGES } from '../data/stages';
 import { CHARACTERS } from '../data/characters';
+import { CURRENT_EVENTS } from '../data/events';
 import { ArrowLeft, Zap } from 'lucide-react';
 
 const PUNI_RADIUS      = 16;
@@ -13,7 +14,7 @@ const FEVER_DURATION   = 7000;
 
 // Preload individual character images for ALL ranks
 const CHAR_IMAGES: Record<string, HTMLImageElement> = {};
-const rankCounts: Record<string, number> = { S:0, A:0, B:0, C:0, D:0, E:0 };
+const rankCounts: Record<string, number> = { SS:0, S:0, A:0, B:0, C:0, D:0, E:0 };
 CHARACTERS.forEach(c => {
   rankCounts[c.rank]++;
   const img = new Image();
@@ -26,7 +27,14 @@ interface PuniData { charId: string; size: number; level: number; }
 const GameScene = () => {
   const { stageId } = useParams();
   const navigate    = useNavigate();
-  const { team, characters, clearStage } = useGame();
+  const { team, characters, clearStage, trackMission } = useGame();
+
+  // Check if any team member has event boost
+  const eventBoostActive = team.some(id => {
+    const c = CHARACTERS.find(x => x.id === id);
+    return c?.eventBoost;
+  });
+  const boostMultiplier = eventBoostActive ? (CURRENT_EVENTS[0]?.boostMultiplier ?? 1) : 1;
 
   const stage = STAGES.find(s => s.id === stageId);
 
@@ -110,20 +118,22 @@ const GameScene = () => {
     }
   }, [feverGauge, isFever, dealDamage]);
 
-  // ---------- skill ----------
   const triggerSkill = (charId: string) => {
     if ((charGauges[charId] || 0) < 100 || isGameOver || isVictory) return;
     const cd = CHARACTERS.find(c => c.id === charId);
-    if (!cd || cd.rank !== 'S' || !cd.skill) return;
+    if (!cd || (cd.rank !== 'S' && cd.rank !== 'SS') || !cd.skill) return;
     setCharGauges(prev => ({ ...prev, [charId]: 0 }));
+    const charData = characters[charId];
+    const skillLv = (charData as any)?.skillLevel || 1;
+    const skillPowerScale = 1 + (skillLv - 1) * 0.2; // +20% per skill level
     if (cd.skill.type === 'damage') {
-      const dmg = Math.floor((cd.baseAtk + (characters[charId]?.level || 1) * 5) * cd.skill.power);
+      const dmg = Math.floor((cd.baseAtk + (charData?.level || 1) * 5) * cd.skill.power * skillPowerScale * boostMultiplier);
       dealDamage(dmg);
       const id = Date.now();
-      setDamageTexts(p => [...p, { id, val: dmg, x: 120, y: 120, color: '#ffff00' }]);
+      setDamageTexts(p => [...p, { id, val: dmg, x: 120, y: 120, color: cd.rank === 'SS' ? '#ff22ff' : '#ffff00' }]);
       setTimeout(() => setDamageTexts(p => p.filter(t => t.id !== id)), 1500);
     } else {
-      const heal = cd.skill.power;
+      const heal = Math.floor(cd.skill.power * skillPowerScale);
       setPlayerHp(prev => Math.min(maxPlayerHp, prev + heal));
       const id = Date.now();
       setDamageTexts(p => [...p, { id, val: heal, x: 120, y: 120, color: '#00ff88' }]);
@@ -450,20 +460,20 @@ const GameScene = () => {
         {team.map(charId => {
           const cd   = CHARACTERS.find(c => c.id === charId);
           if (!cd) return null;
-          const isS  = cd.rank === 'S';
+          const isSkillChar = cd.rank === 'S' || cd.rank === 'SS';
           const g    = charGauges[charId] || 0;
           const full = g >= 100;
           return (
             <div key={charId} style={{ position: 'relative' }}>
               <div
                 className="char-icon"
-                onClick={() => full && isS ? triggerSkill(charId) : undefined}
+                onClick={() => full && isSkillChar ? triggerSkill(charId) : undefined}
                 style={{
                   backgroundColor: cd.color,
                   width: 50, height: 50, fontSize: '1.5rem',
-                  border:    isS && full ? '3px solid #ffff00' : '2px solid #555',
-                  boxShadow: isS && full ? '0 0 14px #ff0'    : 'none',
-                  cursor:    isS && full ? 'pointer' : 'default',
+                  border:    isSkillChar && full ? `3px solid ${cd.rank === 'SS' ? '#ff22ff' : '#ffff00'}` : '2px solid #555',
+                  boxShadow: isSkillChar && full ? `0 0 14px ${cd.rank === 'SS' ? '#ff22ff' : '#ff0'}` : 'none',
+                  cursor:    isSkillChar && full ? 'pointer' : 'default',
                   opacity:   full ? 1 : 0.7,
                   position: 'relative', overflow: 'hidden',
                 }}
@@ -471,10 +481,13 @@ const GameScene = () => {
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${g}%`, background: 'rgba(255,255,255,0.28)' }} />
                 <span style={{ position: 'relative', zIndex: 1 }}>{cd.emoji}</span>
               </div>
-              {isS && full && (
-                <div style={{ position: 'absolute', top: -10, right: -10, background: '#ffff00', color: '#000', borderRadius: '50%', padding: 2 }}>
+              {isSkillChar && full && (
+                <div style={{ position: 'absolute', top: -10, right: -10, background: cd.rank === 'SS' ? '#ff22ff' : '#ffff00', color: '#000', borderRadius: '50%', padding: 2 }}>
                   <Zap size={14} />
                 </div>
+              )}
+              {cd.eventBoost && (
+                <div style={{ position: 'absolute', top: -5, left: -5, background: '#ff2255', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.45rem', color: 'white', fontWeight: 900, border: '1px solid white' }}>特</div>
               )}
             </div>
           );

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Users, Sparkles, BookOpen } from 'lucide-react';
+import { Play, Users, Sparkles, BookOpen, CalendarDays } from 'lucide-react';
 import { useGame } from '../store/GameContext';
 import { CHARACTERS } from '../data/characters';
 import { STAGES } from '../data/stages';
@@ -76,7 +76,7 @@ const Home = () => {
       </div>
 
       {/* ── Secondary buttons ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <button
           className="btn btn-secondary"
           style={{ padding: '15px 5px', flexDirection: 'column', gap: '8px' }}
@@ -102,6 +102,16 @@ const Home = () => {
         >
           <BookOpen size={28} />
           <span className="text-outline" style={{ fontSize: '0.9rem' }}>大辞典</span>
+        </button>
+
+        <button
+          className="btn btn-y-point"
+          style={{ padding: '15px 5px', flexDirection: 'column', gap: '8px', position: 'relative' }}
+          onClick={() => navigate('/event')}
+        >
+          <div style={{ position: 'absolute', top: -5, right: -5, background: '#ff2255', color: 'white', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 900, border: '2px solid white' }}>NEW</div>
+          <CalendarDays size={28} />
+          <span className="text-outline" style={{ fontSize: '0.9rem' }}>イベント</span>
         </button>
       </div>
 

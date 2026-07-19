@@ -28,7 +28,7 @@ const eventRankWeights: Record<Rank, number> = {
 type GachaType = 'normal' | 'event';
 
 const Gacha = () => {
-  const { yPoints, addYPoints, unlockCharacter } = useGame();
+  const { yPoints, addYPoints, unlockCharacter, trackMission } = useGame();
   const navigate = useNavigate();
   const [results, setResults] = useState<Character[] | null>(null);
   const [isPulling, setIsPulling] = useState(false);
@@ -46,6 +46,7 @@ const Gacha = () => {
     
     setIsPulling(true);
     addYPoints(-cost);
+    trackMission('gacha_pull', times);
     
     setTimeout(() => {
       const pulledChars: Character[] = [];
