@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useGame } from '../store/GameContext';
 import { CHARACTERS } from '../data/characters';
 import type { Character, Rank } from '../data/characters';
-import { ArrowLeft, RefreshCw, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Info, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const GACHA_COST_1 = 50;
@@ -28,12 +28,13 @@ const eventRankWeights: Record<Rank, number> = {
 type GachaType = 'normal' | 'event';
 
 const Gacha = () => {
-  const { yPoints, addYPoints, unlockCharacter, trackMission } = useGame();
+  const { yPoints, addYPoints, unlockCharacter, trackMission, pityCount, stepUpCount, gachaHistory, recordGachaResult } = useGame();
   const navigate = useNavigate();
   const [results, setResults] = useState<Character[] | null>(null);
   const [isPulling, setIsPulling] = useState(false);
   const [currentGacha, setCurrentGacha] = useState<GachaType>('normal');
   const [showRates, setShowRates] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
 
   const pullGacha = (times: number) => {
@@ -50,20 +51,40 @@ const Gacha = () => {
     
     setTimeout(() => {
       const pulledChars: Character[] = [];
-      const weights = currentGacha === 'event' ? eventRankWeights : normalRankWeights;
+      const weights = { ...(currentGacha === 'event' ? eventRankWeights : normalRankWeights) };
       
+      // Step Up Logic: For every 10 pulls, S and SS rates increase slightly
+      const stepUpBonus = Math.floor((stepUpCount || 0) / 10);
+      if (weights['SS'] !== undefined) weights['SS'] += stepUpBonus * 0.5;
+      if (weights['S'] !== undefined) weights['S'] += stepUpBonus * 1.5;
+
+      let newPityCount = pityCount ?? 100;
+      let newStepUpCount = (stepUpCount ?? 0) + times;
+      let gotSS = false;
+
       for (let i = 0; i < times; i++) {
-        let totalWeight = 0;
-        for (const w of Object.values(weights)) totalWeight += w;
-        let rand = Math.random() * totalWeight;
+        newPityCount--;
+        
         let pulledRank: Rank = 'E';
-        for (const [r, w] of Object.entries(weights)) {
-          if (rand < w) {
-            pulledRank = r as Rank;
-            break;
+        if (newPityCount <= 0) {
+          pulledRank = 'SS'; // PITY GUARANTEE
+        } else {
+          let totalWeight = 0;
+          for (const w of Object.values(weights)) totalWeight += w;
+          let rand = Math.random() * totalWeight;
+          for (const [r, w] of Object.entries(weights)) {
+            if (rand < w) {
+              pulledRank = r as Rank;
+              break;
+            }
+            rand -= w;
           }
-          rand -= w;
         }
+        
+        // Ensure SS can only be pulled if the gacha contains it
+        if (pulledRank === 'SS' && weights['SS'] === 0) pulledRank = 'S';
+
+        if (pulledRank === 'SS') gotSS = true;
         
         const rankChars = CHARACTERS.filter(c => c.rank === pulledRank);
         const pulledChar = rankChars[Math.floor(Math.random() * rankChars.length)];
@@ -71,6 +92,13 @@ const Gacha = () => {
         unlockCharacter(pulledChar.id);
       }
       
+      if (gotSS) {
+        newPityCount = 100; // Reset pity
+        newStepUpCount = 0; // Reset step up
+      }
+
+      recordGachaResult(pulledChars.map(c => c.id), newPityCount, newStepUpCount);
+
       pulledChars.sort((a, b) => RANK_ORDER[a.rank] - RANK_ORDER[b.rank]);
       setResults(pulledChars);
       setIsPulling(false);
@@ -120,54 +148,76 @@ const Gacha = () => {
     </button>
   );
 
-  const RatesModal = () => (
-    <div style={{
-      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
-    }}>
-      <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '20px' }}>
-        <h3 className="text-outline" style={{ textAlign: 'center', fontSize: '1.5rem', marginBottom: '20px' }}>
-          {currentGacha === 'event' ? 'イベントガシャ' : '恒常ガシャ'} 提供割合
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {Object.entries(currentGacha === 'event' ? eventRankWeights : normalRankWeights)
-            .filter(([_, weight]) => weight > 0)
-            .map(([rank, weight]) => (
-            <div key={rank} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'rgba(255,255,255,0.5)', borderRadius: '10px' }}>
-              <span className="rank-badge" style={{ background: RANK_COLORS[rank as Rank] }}>{rank}</span>
-              <span style={{ fontWeight: 900, fontSize: '1.2rem' }}>{weight}%</span>
-            </div>
-          ))}
-        </div>
-        <button className="btn btn-secondary" style={{ width: '100%', marginTop: '20px', padding: '15px' }} onClick={() => setShowRates(false)}>
-          とじる
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="view-container" style={{ background: 'url(https://img.game8.jp/323860/a62ab2ed8e11a6f87ea4952093557e03.png/show) center/cover no-repeat', paddingBottom: 0 }}>
-      {showRates && <RatesModal />}
+      {/* Rates Modal */}
+      {showRates && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass-panel" style={{ width: '80%', padding: '20px', position: 'relative' }}>
+            <button onClick={() => setShowRates(false)} style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+              ✕
+            </button>
+            <h3 style={{ margin: '0 0 15px', textAlign: 'center' }}>{currentGacha === 'event' ? 'イベント' : '恒常'}ガシャ 提供割合</h3>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {Object.entries(currentGacha === 'event' ? eventRankWeights : normalRankWeights)
+                .sort((a, b) => RANK_ORDER[a[0] as Rank] - RANK_ORDER[b[0] as Rank])
+                .map(([rank, weight]) => {
+                  const total = Object.values(currentGacha === 'event' ? eventRankWeights : normalRankWeights).reduce((a, b) => a + b, 0);
+                  const stepUpBonus = Math.floor((stepUpCount || 0) / 10);
+                  let finalWeight = weight;
+                  if (rank === 'SS') finalWeight += stepUpBonus * 0.5;
+                  if (rank === 'S') finalWeight += stepUpBonus * 1.5;
+                  
+                  const pct = ((finalWeight / total) * 100).toFixed(1);
+                  if (finalWeight === 0) return null;
+                  return (
+                    <div key={rank} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px' }}>
+                      <span className="rank-badge" style={{ backgroundColor: RANK_COLORS[rank as Rank], width: '30px', textAlign: 'center' }}>{rank}</span>
+                      <span style={{ fontWeight: 'bold' }}>{pct}%</span>
+                    </div>
+                  );
+                })}
+            </div>
+            {stepUpCount && stepUpCount >= 10 ? (
+              <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#ff2255', marginTop: '15px' }}>※ステップアップボーナス適用中の確率です</p>
+            ) : null}
+          </div>
+        </div>
+      )}
 
-      {/* Absolute Header matching reference */}
-      <div style={{ position: 'absolute', top: 10, left: 10, right: 10, display: 'flex', justifyContent: 'space-between', zIndex: 10 }}>
-        <button 
-          className="btn btn-secondary" 
-          onClick={() => navigate('/home')}
-          style={{ padding: '8px 15px', borderRadius: '20px' }}
-        >
-          <ArrowLeft size={18} style={{ marginRight: '5px' }} />
-          もどる
-        </button>
-        <button 
-          className="btn btn-secondary" 
-          onClick={() => setShowRates(true)}
-          style={{ padding: '8px 15px', borderRadius: '20px', background: 'linear-gradient(180deg, #aa66ff 0%, #6600cc 100%)', color: 'white' }}
-        >
-          <Info size={18} style={{ marginRight: '5px' }} />
-          ガシャなかみ
-        </button>
-      </div>
+      {/* History Modal */}
+      {showHistory && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass-panel" style={{ width: '90%', maxHeight: '80%', display: 'flex', flexDirection: 'column', padding: '20px', position: 'relative' }}>
+            <button onClick={() => setShowHistory(false)} style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+              ✕
+            </button>
+            <h3 style={{ margin: '0 0 15px', textAlign: 'center' }}>ガシャ履歴（直近50件）</h3>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {(!gachaHistory || gachaHistory.length === 0) ? (
+                <div style={{ textAlign: 'center', color: '#aaa', padding: '20px' }}>履歴がありません</div>
+              ) : (
+                gachaHistory.map((h: any, i: number) => {
+                  const c = CHARACTERS.find(x => x.id === h.charId);
+                  if (!c) return null;
+                  return (
+                    <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#aaa', width: '70px' }}>
+                        {new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div className="rank-badge" style={{ backgroundColor: RANK_COLORS[c.rank], padding: '2px 6px', fontSize: '0.7rem' }}>{c.rank}</div>
+                      <div style={{ flex: 1, fontSize: '0.9rem', fontWeight: 'bold' }}>{c.name}</div>
+                      <div style={{ fontSize: '1.2rem' }}>{c.emoji}</div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Container */}
 
       {/* Main Container */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -269,9 +319,21 @@ const Gacha = () => {
             </div>
 
             {/* Pagination dots */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '10px' }}>
               <div style={{ width: 12, height: 12, borderRadius: '50%', background: currentGacha === 'normal' ? 'white' : 'rgba(255,255,255,0.3)', border: '2px solid rgba(0,0,0,0.3)' }} />
               <div style={{ width: 12, height: 12, borderRadius: '50%', background: currentGacha === 'event' ? 'white' : 'rgba(255,255,255,0.3)', border: '2px solid rgba(0,0,0,0.3)' }} />
+            </div>
+
+            {/* Pity / Step up info */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', marginBottom: '15px' }}>
+              <div style={{ background: 'rgba(255,255,255,0.2)', padding: '5px 15px', borderRadius: '20px', fontSize: '0.8rem', color: '#ffcc00', border: '1px solid rgba(255,255,255,0.3)' }}>
+                SS確定まで あと <strong style={{ fontSize: '1.2rem', color: '#fff' }}>{pityCount ?? 100}</strong> 回
+              </div>
+              {currentGacha === 'event' && (stepUpCount ?? 0) >= 10 && (
+                <div style={{ background: 'rgba(255,34,85,0.8)', padding: '4px 10px', borderRadius: '15px', fontSize: '0.75rem', color: 'white', fontWeight: 'bold' }}>
+                  🔥 ステップアップ中！（SS確率UP）
+                </div>
+              )}
             </div>
             
             {/* Buttons Area */}

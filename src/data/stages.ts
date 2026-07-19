@@ -8,6 +8,7 @@ export interface Stage {
   enemyEmoji: string;
   rewardMoney: number;
   rewardYPoints: number;
+  isHidden?: boolean;
 }
 
 const generateStages = (count: number): Stage[] => {
@@ -33,6 +34,22 @@ const generateStages = (count: number): Stage[] => {
       rewardMoney: money,
       rewardYPoints: yPoints,
     });
+
+    // Add a hidden stage every 10 stages
+    if (i % 10 === 0) {
+      stages.push({
+        id: `stage_hidden_${i/10}`,
+        name: `ウラステージ ${i/10}`,
+        enemyName: `真・怪魔 Lv.${i/10}`,
+        enemyHp: hp * 2.5,
+        enemyAtk: atk * 1.5,
+        enemyColor: '#110022',
+        enemyEmoji: '🐉',
+        rewardMoney: money * 3,
+        rewardYPoints: yPoints * 3,
+        isHidden: true,
+      });
+    }
   }
   return stages;
 };

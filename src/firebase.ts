@@ -41,6 +41,9 @@ export interface PlayerData {
   };
   missionProgress: Record<string, number>;  // missionId -> progress count
   completedMissions: string[];              // claimed mission IDs
+  pityCount?: number;
+  stepUpCount?: number;
+  gachaHistory?: { timestamp: number; charId: string }[];
 }
 
 const DEFAULT_DATA: PlayerData = {
@@ -55,6 +58,9 @@ const DEFAULT_DATA: PlayerData = {
   items: { expSmall: 3, expLarge: 1, skillBook: 0 },
   missionProgress: {},
   completedMissions: [],
+  pityCount: 100,
+  stepUpCount: 0,
+  gachaHistory: [],
 };
 
 export const loginAndGetData = async (onDataLoaded: (data: PlayerData, uid: string) => void) => {

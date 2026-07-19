@@ -17,6 +17,7 @@ interface GameState extends PlayerData {
   clearStage: (stageId: string, moneyReward: number, yPointReward: number) => void;
   trackMission: (type: string, amount?: number) => void;
   claimMission: (missionId: string) => void;
+  recordGachaResult: (charIds: string[], newPityCount: number, newStepUpCount: number) => void;
 }
 
 const GameContext = createContext<GameState | undefined>(undefined);
@@ -42,6 +43,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     items: DEFAULT_ITEMS,
     missionProgress: {},
     completedMissions: [],
+    pityCount: 100,
+    stepUpCount: 0,
+    gachaHistory: [],
   });
 
   useEffect(() => {
@@ -50,6 +54,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!playerData.items) playerData.items = DEFAULT_ITEMS;
       if (!playerData.missionProgress) playerData.missionProgress = {};
       if (!playerData.completedMissions) playerData.completedMissions = [];
+      if (playerData.pityCount === undefined) playerData.pityCount = 100;
+      if (playerData.stepUpCount === undefined) playerData.stepUpCount = 0;
+      if (!playerData.gachaHistory) playerData.gachaHistory = [];
 
       // Migrate old character saves (add missing fields)
       const migratedChars: PlayerData['characters'] = {};
@@ -245,6 +252,21 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const recordGachaResult = (charIds: string[], newPityCount: number, newStepUpCount: number) => {
+    const newHistory = [...(data.gachaHistory || [])];
+    const timestamp = Date.now();
+    charIds.forEach(charId => {
+      newHistory.unshift({ timestamp, charId }); // add to front
+    });
+    // keep only last 50
+    if (newHistory.length > 50) newHistory.length = 50;
+    mutateAndSave({
+      pityCount: newPityCount,
+      stepUpCount: newStepUpCount,
+      gachaHistory: newHistory,
+    });
+  };
+
   return (
     <GameContext.Provider value={{
       ...data,
@@ -260,6 +282,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearStage,
       trackMission,
       claimMission,
+      recordGachaResult,
     }}>
       {children}
     </GameContext.Provider>

@@ -1,9 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Users, Sparkles, BookOpen, CalendarDays } from 'lucide-react';
+import { Play, Users, Sparkles, BookOpen, CalendarDays, Bell, Gift, X } from 'lucide-react';
 import { useGame } from '../store/GameContext';
 import { CHARACTERS } from '../data/characters';
 import { STAGES } from '../data/stages';
+
+const NEWS_ITEMS = [
+  "🎉【新機能】ワールドマップ追加！ウラステージも探してみてね！",
+  "🌟 ガシャで新SSキャラが確率アップ中！",
+  "🎁 毎日ログインして豪華ボーナスをもらおう！",
+];
 
 const Home = () => {
   const navigate = useNavigate();
@@ -12,12 +18,46 @@ const Home = () => {
   const ownedCount   = Object.keys(characters).length;
   const totalCount   = CHARACTERS.length;
   const clearedCount = (clearedStages || []).length;
-  const totalStages  = STAGES.length;
+  const totalStages  = STAGES.filter(s => !s.isHidden).length;
 
   const progressPct  = Math.round((clearedCount / totalStages) * 100);
 
+  const [newsIndex, setNewsIndex] = React.useState(0);
+  const [showDaily, setShowDaily] = React.useState(false);
+  const { addYPoints, addMoney } = useGame();
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setNewsIndex(p => (p + 1) % NEWS_ITEMS.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  React.useEffect(() => {
+    const today = new Date().toLocaleDateString();
+    const lastLogin = localStorage.getItem('lastLoginDate');
+    if (lastLogin !== today) {
+      setShowDaily(true);
+      localStorage.setItem('lastLoginDate', today);
+    }
+  }, []);
+
+  const claimDaily = () => {
+    addYPoints(50);
+    addMoney(100);
+    setShowDaily(false);
+  };
+
   return (
-    <div className="view-container" style={{ gap: '20px', padding: '30px 20px' }}>
+    <div className="view-container" style={{ gap: '15px', padding: '20px 20px', position: 'relative' }}>
+      
+      {/* ── News Banner ── */}
+      <div style={{ background: 'rgba(0, 0, 0, 0.4)', borderRadius: '10px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+        <Bell size={18} color="#ffcc00" style={{ flexShrink: 0 }} />
+        <div style={{ flex: 1, fontSize: '0.85rem', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {NEWS_ITEMS[newsIndex]}
+        </div>
+      </div>
 
       {/* ── Progress Card ── */}
       <div className="glass-panel" style={{ padding: '20px', background: 'rgba(255,255,255,0.95)' }}>
@@ -114,6 +154,33 @@ const Home = () => {
           <span className="text-outline" style={{ fontSize: '0.9rem' }}>イベント</span>
         </button>
       </div>
+
+      {/* ── Daily Login Modal ── */}
+      {showDaily && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass-panel" style={{ width: '80%', padding: '20px', textAlign: 'center', position: 'relative', animation: 'popIn 0.5s ease-out' }}>
+            <button onClick={() => setShowDaily(false)} style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+              <X size={24} />
+            </button>
+            <Gift size={60} color="#ff2255" style={{ margin: '0 auto 10px', filter: 'drop-shadow(0 0 10px rgba(255,34,85,0.8))' }} />
+            <h2 style={{ color: '#ffcc00', margin: '0 0 10px', fontSize: '1.5rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>ログインボーナス！</h2>
+            <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>今日も遊んでくれてありがとう！<br/>プレゼントを受け取ってね！</p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '20px' }}>
+              <div style={{ background: 'rgba(255,165,0,0.2)', padding: '10px', borderRadius: '10px' }}>
+                <div style={{ fontSize: '1.2rem', marginBottom: '5px' }}>🔶</div>
+                <div style={{ color: '#ffaa00', fontWeight: 'bold' }}>50 Ypt</div>
+              </div>
+              <div style={{ background: 'rgba(100,200,100,0.2)', padding: '10px', borderRadius: '10px' }}>
+                <div style={{ fontSize: '1.2rem', marginBottom: '5px' }}>💰</div>
+                <div style={{ color: '#88dd88', fontWeight: 'bold' }}>100 コイン</div>
+              </div>
+            </div>
+            <button className="btn btn-primary" onClick={claimDaily} style={{ width: '100%', padding: '12px' }}>
+              受け取る
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
