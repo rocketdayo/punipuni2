@@ -1,0 +1,519 @@
+/* ==========================================================================
+   カード
+   ========================================================================== */
+
+.card {
+  --card-w: 166px;
+  --accent: #e9c46a;
+  --accent-soft: rgba(233, 196, 106, 0.18);
+  --accent-frame: rgba(233, 196, 106, 0.5);
+  position: relative;
+  width: var(--card-w);
+  height: calc(var(--card-w) * 1.43);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--accent-soft), transparent 62%),
+    linear-gradient(168deg, #2a2431 0%, #1a1822 45%, #100f16 100%);
+  box-shadow:
+    var(--shadow-card),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  isolation: isolate;
+  user-select: none;
+  transition:
+    transform 0.24s var(--ease-out),
+    box-shadow 0.24s,
+    border-color 0.24s,
+    filter 0.24s;
+}
+
+.card--attack {
+  --accent: #ff8a52;
+  --accent-soft: rgba(255, 112, 60, 0.2);
+  --accent-frame: rgba(255, 138, 82, 0.55);
+}
+
+.card--skill {
+  --accent: #6fc6ff;
+  --accent-soft: rgba(90, 175, 255, 0.17);
+  --accent-frame: rgba(111, 198, 255, 0.5);
+}
+
+.card--power {
+  --accent: #c0a6ff;
+  --accent-soft: rgba(170, 130, 255, 0.18);
+  --accent-frame: rgba(192, 166, 255, 0.55);
+}
+
+.card--trap {
+  --accent: #6ee0b3;
+  --accent-soft: rgba(80, 220, 165, 0.16);
+  --accent-frame: rgba(110, 224, 179, 0.5);
+}
+
+.card__frame {
+  position: absolute;
+  inset: 4px;
+  border-radius: 9px;
+  border: 1px solid var(--accent-frame);
+  opacity: 0.42;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.card__shine {
+  position: absolute;
+  inset: -40%;
+  z-index: 4;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.16) 49%,
+    transparent 56%
+  );
+  transform: translateX(-75%);
+  transition: transform 0.65s var(--ease-out);
+  pointer-events: none;
+}
+
+.card:hover .card__shine,
+.hand__slot:hover .card__shine {
+  transform: translateX(75%);
+}
+
+.card__cost {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  z-index: 5;
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 26%, #fff6d6 0%, #e9c46a 46%, #a97c2f 100%);
+  border: 1px solid rgba(255, 246, 214, 0.7);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  color: #241807;
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.card__rarity {
+  position: absolute;
+  top: 12px;
+  right: 11px;
+  z-index: 5;
+  display: flex;
+  gap: 3px;
+}
+
+.card__rarity i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  opacity: 0.9;
+}
+
+.card__art {
+  position: relative;
+  height: 43%;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    radial-gradient(90% 90% at 50% 22%, var(--accent-soft), transparent 70%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.38));
+}
+
+.card__art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    115deg,
+    transparent 0 9px,
+    rgba(255, 255, 255, 0.025) 9px 10px
+  );
+}
+
+.card__art::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -40%;
+  width: 70%;
+  height: 70%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.22;
+  filter: blur(24px);
+}
+
+.card__glyph {
+  position: relative;
+  z-index: 1;
+  font-size: calc(var(--card-w) * 0.27);
+  line-height: 1;
+  transform: translateY(-2px);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.65));
+}
+
+.card__type {
+  position: absolute;
+  left: 7px;
+  bottom: 5px;
+  z-index: 2;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+.card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 4px 2px;
+  min-height: 0;
+}
+
+.card__name {
+  font-family: var(--serif);
+  font-size: calc(var(--card-w) * 0.085);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: #fdf8ec;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card__text {
+  font-size: calc(var(--card-w) * 0.061);
+  line-height: 1.55;
+  color: #c8c0d0;
+  letter-spacing: 0.005em;
+}
+
+.card__num {
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 1.06em;
+}
+
+.card__exhaust {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+.card__trap-mark {
+  position: absolute;
+  right: -20px;
+  bottom: 12px;
+  transform: rotate(-90deg);
+  font-size: 7px;
+  letter-spacing: 0.32em;
+  color: var(--accent);
+  opacity: 0.45;
+}
+
+.card--playable {
+  border-color: var(--accent-frame);
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px var(--accent-frame),
+    0 0 22px -6px var(--accent);
+}
+
+.card--dimmed {
+  filter: saturate(0.45) brightness(0.6);
+}
+
+/* ==========================================================================
+   手札
+   ========================================================================== */
+
+.hand {
+  position: relative;
+  width: 100%;
+  height: calc(var(--card-w, 166px) * 1.43 + 30px);
+}
+
+.hand__fan {
+  position: absolute;
+  inset: 0;
+}
+
+.hand__slot {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform-origin: 50% 100%;
+  transition: transform 0.38s var(--ease-out);
+}
+
+.hand__button {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 13px;
+  cursor: pointer;
+  transition: transform 0.24s var(--ease-out);
+}
+
+.hand__button.is-disabled {
+  cursor: not-allowed;
+}
+
+.hand__button.is-disabled .card {
+  filter: saturate(0.55) brightness(0.62);
+  opacity: 0.9;
+}
+
+.hand__slot .card {
+  animation: cardRise 0.42s cubic-bezier(0.2, 0.9, 0.25, 1.2) backwards;
+}
+
+.hand__slot:hover {
+  z-index: 220 !important;
+}
+
+.hand__slot:hover .hand__button.is-playable .card {
+  transform: translateY(-30px) scale(1.07);
+  border-color: var(--accent-frame);
+  box-shadow:
+    0 30px 54px rgba(0, 0, 0, 0.68),
+    0 0 0 1px var(--accent-frame),
+    0 0 34px -6px var(--accent);
+}
+
+.hand__slot:hover .hand__button.is-disabled .card {
+  transform: translateY(-12px) scale(1.02);
+}
+
+.hand__index {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  z-index: 6;
+  width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.55);
+  font-size: 9px;
+  color: rgba(244, 238, 226, 0.5);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.hand__slot:hover .hand__index {
+  opacity: 0.9;
+}
+
+.hand__empty {
+  position: absolute;
+  inset: auto 0 40% 0;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--dim);
+}
+
+@keyframes cardRise {
+  0% {
+    opacity: 0;
+    transform: translateY(64px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* カード使用時の残像 */
+
+.ghost {
+  --card-w: 100px;
+  position: fixed;
+  z-index: 1200;
+  pointer-events: none;
+  border-radius: 13px;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.7));
+}
+
+.ghost__inner {
+  width: 100%;
+  height: 100%;
+  animation: cardCast 0.54s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  transform-origin: 50% 80%;
+}
+
+.ghost .card {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes cardCast {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(-46px) scale(1.12);
+    opacity: 1;
+    filter: brightness(1.25);
+  }
+  100% {
+    transform: translateY(-136px) scale(1.02) rotate(-2deg);
+    opacity: 0;
+    filter: brightness(1.8);
+  }
+}
+
+/* ==========================================================================
+   報酬カード
+   ========================================================================== */
+
+.reward-cards {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(12px, 2.4vw, 34px);
+  flex-wrap: wrap;
+  margin: 8px 0 10px;
+}
+
+.reward-card {
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 16px;
+  animation: rewardReveal 0.6s cubic-bezier(0.2, 0.9, 0.25, 1.15) backwards;
+  animation-delay: calc(var(--i) * 110ms + 120ms);
+  transition: transform 0.3s var(--ease-out), filter 0.3s;
+}
+
+.reward-card .card {
+  --card-w: clamp(158px, 19vw, 192px);
+}
+
+.reward-card__aura {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(233, 196, 106, 0.35), transparent 68%);
+  filter: blur(26px);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.reward-card:hover {
+  transform: translateY(-14px);
+}
+
+.reward-card:hover .card {
+  border-color: rgba(255, 232, 175, 0.8);
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.7),
+    0 0 44px -6px rgba(233, 196, 106, 0.65);
+}
+
+.reward-card:hover .reward-card__aura {
+  opacity: 1;
+}
+
+.reward-card__cta {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  transform: translateX(-50%) translateY(6px);
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f7dd9a, #cfa447);
+  color: #211607;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity 0.25s, transform 0.25s;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.reward-card:hover .reward-card__cta {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.reward-card.is-picked {
+  transform: translateY(-26px) scale(1.05);
+  z-index: 5;
+}
+
+.reward-card.is-picked .card {
+  border-color: #ffe9b5;
+  box-shadow:
+    0 0 0 2px rgba(255, 233, 181, 0.9),
+    0 0 70px rgba(233, 196, 106, 0.6);
+}
+
+.reward-card.is-picked::after {
+  content: '獲得';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(6, 7, 11, 0.7);
+  font-family: var(--serif);
+  font-size: 22px;
+  letter-spacing: 0.3em;
+  color: var(--gold-bright);
+  animation: fadeUp 0.3s both;
+}
+
+@keyframes rewardReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
